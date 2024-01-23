@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -24,31 +22,21 @@ public class ServerListenerThread extends Thread {
     @Override
     public void run() {
         try {
-            Socket socket = serverSocket.accept();
-            InputStream inputStream = socket.getInputStream();
-            OutputStream outputStream = socket.getOutputStream();
+            while (serverSocket.isBound() && !serverSocket.isClosed()) {
+                Socket socket = serverSocket.accept();
+                LOGGER.info(" Connection accepted: ", socket.getInetAddress());
 
-            LOGGER.info(" Connection accepted: ", socket.getInetAddress());
-
-            String html = "<html><head><title>Simple Java HTTP Server</title><body><h1>This page was served using java</h1></body></head></html>";
-            final String CRLF = "\n\r";
-            String response =
-                    "HTTP/1.1 200 OK" + CRLF + "Content-Length: " +
-                            html.getBytes().length + CRLF +
-                            CRLF +
-                            html +
-                            CRLF + CRLF;
-            outputStream.write(response.getBytes());
-
-            inputStream.close();
-            outputStream.close();
-            socket.close();
-            serverSocket.close();
-            super.run();
-
+                HttpConnectionWorkerThread workerThread = new HttpConnectionWorkerThread(socket);
+                workerThread.start();
+            }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            LOGGER.error("Problem with setting socket", e);
+        } finally {
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {}
+            }
         }
     }
 }
