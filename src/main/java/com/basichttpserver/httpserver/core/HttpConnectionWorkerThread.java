@@ -22,6 +22,12 @@ public class HttpConnectionWorkerThread extends Thread {
             inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
 
+            int _byte;
+
+            while ((_byte = inputStream.read()) >= 0) {
+                System.out.print((char) _byte);
+            }
+
             String html = "<html><head><title>Simple Java HTTP Server</title><body><h1>This page was served using java</h1></body></head></html>";
             final String CRLF = "\n\r";
             String response =
@@ -50,8 +56,6 @@ public class HttpConnectionWorkerThread extends Thread {
                     socket.close();
                 } catch (IOException e) {}
             }
-
-
         }
     }
 }
